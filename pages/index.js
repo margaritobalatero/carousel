@@ -113,11 +113,7 @@ export default function Home() {
                     <td className="py-2"><img src={img.url} alt={img.title} className="w-36 h-20 object-cover rounded"/></td>
                     <td>{img.title}</td>
                     <td>{img.owner}</td>
-                    <td>
-                      {address === img.owner && (
-                        <button onClick={() => remove(img._id)} className="px-3 py-1 bg-red-500 text-white rounded">Delete</button>
-                      )}
-                    </td>
+                
                   </tr>
                 ))}
               </tbody>
