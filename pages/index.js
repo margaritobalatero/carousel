@@ -77,7 +77,7 @@ export default function Home() {
 
         {/* HEADER */}
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Carousel App</h1>
+          <h1 className="text-2xl font-bold">ICC Batch 85 Carousel App</h1>
           {address ? (
             <div className="flex gap-3 items-center">
               <span className="text-sm">{address}</span>
