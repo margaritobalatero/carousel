@@ -12,10 +12,7 @@ export default function Home() {
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
 
-  // 🔍 Search
-  const [search, setSearch] = useState('')
-
-  // 🪟 Modal
+  // ✅ Modal state
   const [showModal, setShowModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
 
@@ -63,18 +60,17 @@ export default function Home() {
     mutate()
   }
 
-  // 🪟 Open modal
+  async function remove(id) {
+    if (!confirm('Delete?')) return
+    await axios.delete(`/api/images/${id}`)
+    mutate()
+  }
+
+  // ✅ Open modal
   function openDetail(img) {
     setSelectedImage(img)
     setShowModal(true)
   }
-
-  // 🔎 Filter data
-  const filteredData = data?.filter(img =>
-    img.title?.toLowerCase().includes(search.toLowerCase()) ||
-    img.owner?.toLowerCase().includes(search.toLowerCase()) ||
-    img.url?.toLowerCase().includes(search.toLowerCase())
-  )
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -86,43 +82,22 @@ export default function Home() {
           {address ? (
             <div className="flex gap-3 items-center">
               <span className="text-sm">{address}</span>
-              <button
-                onClick={logout}
-                className="px-3 py-1 bg-red-500 text-white rounded"
-              >
+              <button onClick={logout} className="px-3 py-1 bg-red-500 text-white rounded">
                 Logout
               </button>
             </div>
           ) : (
-            <button
-              onClick={login}
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-            >
+            <button onClick={login} className="px-4 py-2 bg-blue-600 text-white rounded">
               Login with MetaMask
             </button>
           )}
         </header>
 
-        {/* 🔍 SEARCH */}
-        <section className="mb-6">
-          <input
-            type="text"
-            placeholder="Search by title, owner, or URL..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </section>
-
         {/* CAROUSEL */}
         <section className="mb-8">
           <h2 className="text-xl mb-2">Carousel</h2>
           <div className="bg-white p-4 rounded shadow">
-            {filteredData?.length ? (
-              <Carousel images={filteredData} />
-            ) : (
-              <p>No matching images</p>
-            )}
+            {data?.length ? <Carousel images={data} /> : <p>No images yet</p>}
           </div>
         </section>
 
@@ -142,9 +117,7 @@ export default function Home() {
               placeholder="Title"
               className="w-48 p-2 border rounded"
             />
-            <button className="px-3 bg-green-600 text-white rounded">
-              Add
-            </button>
+            <button className="px-3 bg-green-600 text-white rounded">Add</button>
           </form>
         </section>
 
@@ -158,27 +131,25 @@ export default function Home() {
                   <th>Preview</th>
                   <th>Title</th>
                   <th>Owner</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredData?.map(img => (
-                  <tr key={img._id}>
+                {data?.map(img => (
+                  <tr key={img._id} className="align-top">
                     <td className="py-2">
-                      <img
-                        src={img.url}
-                        className="w-36 h-20 object-cover rounded"
-                      />
+                      <img src={img.url} className="w-36 h-20 object-cover rounded" />
                     </td>
                     <td>{img.title}</td>
                     <td>{img.owner}</td>
-                    <td>
+                    <td className="space-x-2">
                       <button
                         onClick={() => openDetail(img)}
                         className="px-2 py-1 bg-blue-500 text-white rounded"
                       >
                         Details
                       </button>
+                     
                     </td>
                   </tr>
                 ))}
@@ -188,7 +159,7 @@ export default function Home() {
         </section>
       </div>
 
-      {/* 🪟 DETAIL MODAL */}
+      {/* ✅ DETAIL MODAL */}
       {showModal && selectedImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -198,9 +169,7 @@ export default function Home() {
             className="bg-white rounded-lg p-6 max-w-lg w-full"
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-xl font-bold mb-3">
-              {selectedImage.title}
-            </h3>
+            <h3 className="text-xl font-bold mb-3">{selectedImage.title}</h3>
             <img
               src={selectedImage.url}
               className="w-full rounded mb-4"

@@ -3,6 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/api/images": "pages/api/images.js",
-  "/api/auth/me": "pages/api/auth/me.js"
+  "/api/auth/me": "pages/api/auth/me.js",
+  "/api/images": "pages/api/images.js"
 }
