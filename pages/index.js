@@ -11,11 +11,8 @@ export default function Home() {
   const [address, setAddress] = useState(null)
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
-
-  // 🔍 Search
   const [search, setSearch] = useState('')
 
-  // 🪟 Modal
   const [showModal, setShowModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
 
@@ -63,13 +60,11 @@ export default function Home() {
     mutate()
   }
 
-  // 🪟 Open modal
   function openDetail(img) {
     setSelectedImage(img)
     setShowModal(true)
   }
 
-  // 🔎 Filter data
   const filteredData = data?.filter(img =>
     img.title?.toLowerCase().includes(search.toLowerCase()) ||
     img.owner?.toLowerCase().includes(search.toLowerCase()) ||
@@ -86,48 +81,27 @@ export default function Home() {
           {address ? (
             <div className="flex gap-3 items-center">
               <span className="text-sm">{address}</span>
-              <button
-                onClick={logout}
-                className="px-3 py-1 bg-red-500 text-white rounded"
-              >
+              <button onClick={logout} className="px-3 py-1 bg-red-500 text-white rounded">
                 Logout
               </button>
             </div>
           ) : (
-            <button
-              onClick={login}
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-            >
+            <button onClick={login} className="px-4 py-2 bg-blue-600 text-white rounded">
               Login with MetaMask
             </button>
           )}
         </header>
 
-        {/* 🔍 SEARCH */}
-        <section className="mb-6">
-          <input
-            type="text"
-            placeholder="Search by title, owner, or URL..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </section>
-
         {/* CAROUSEL */}
         <section className="mb-8">
           <h2 className="text-xl mb-2">Carousel</h2>
           <div className="bg-white p-4 rounded shadow">
-            {filteredData?.length ? (
-              <Carousel images={filteredData} />
-            ) : (
-              <p>No matching images</p>
-            )}
+            {filteredData?.length ? <Carousel images={filteredData} /> : <p>No images</p>}
           </div>
         </section>
 
         {/* ADD IMAGE */}
-        <section className="mb-8">
+        <section className="mb-6">
           <h2 className="text-xl mb-2">Add Image</h2>
           <form className="flex gap-2" onSubmit={addImage}>
             <input
@@ -142,10 +116,19 @@ export default function Home() {
               placeholder="Title"
               className="w-48 p-2 border rounded"
             />
-            <button className="px-3 bg-green-600 text-white rounded">
-              Add
-            </button>
+            <button className="px-3 bg-green-600 text-white rounded">Add</button>
           </form>
+        </section>
+
+        {/* 🔍 SEARCH (moved below Add Image) */}
+        <section className="mb-8">
+          <input
+            type="text"
+            placeholder="Search by title, owner, or URL..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
         </section>
 
         {/* MANAGE */}
@@ -165,10 +148,7 @@ export default function Home() {
                 {filteredData?.map(img => (
                   <tr key={img._id}>
                     <td className="py-2">
-                      <img
-                        src={img.url}
-                        className="w-36 h-20 object-cover rounded"
-                      />
+                      <img src={img.url} className="w-36 h-20 object-cover rounded" />
                     </td>
                     <td>{img.title}</td>
                     <td>{img.owner}</td>
@@ -188,23 +168,14 @@ export default function Home() {
         </section>
       </div>
 
-      {/* 🪟 DETAIL MODAL */}
+      {/* MODAL */}
       {showModal && selectedImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="bg-white rounded-lg p-6 max-w-lg w-full"
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-bold mb-3">
-              {selectedImage.title}
-            </h3>
-            <img
-              src={selectedImage.url}
-              className="w-full rounded mb-4"
-            />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+             onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full"
+               onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold mb-3">{selectedImage.title}</h3>
+            <img src={selectedImage.url} className="w-full rounded mb-4" />
             <p className="text-sm text-gray-600 mb-4">
               Owner: {selectedImage.owner}
             </p>
