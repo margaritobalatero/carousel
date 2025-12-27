@@ -6,6 +6,11 @@ import { ethers } from 'ethers'
 
 const fetcher = url => axios.get(url).then(r => r.data)
 
+function isImageUrl(url) {
+  return /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
+}
+
+
 export default function Home() {
   const { data, mutate } = useSWR('/api/images', fetcher)
   const [address, setAddress] = useState(null)
@@ -52,13 +57,20 @@ export default function Home() {
     setAddress(null)
   }
 
-  async function addImage(e) {
-    e.preventDefault()
-    await axios.post('/api/images', { url, title })
-    setUrl('')
-    setTitle('')
-    mutate()
+ async function addImage(e) {
+  e.preventDefault()
+
+  if (!isImageUrl(url)) {
+    alert('Only image URLs are allowed (jpg, png, gif, webp)')
+    return
   }
+
+  await axios.post('/api/images', { url, title })
+  setUrl('')
+  setTitle('')
+  mutate()
+}
+
 
   function openDetail(img) {
     setSelectedImage(img)
