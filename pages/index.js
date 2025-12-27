@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import axios from 'axios'
+import Carousel from '../components/Carousel'
 import { ethers } from 'ethers'
 
 const fetcher = url => axios.get(url).then(r => r.data)
 
-// ✅ Detect video files
 function isVideo(url) {
   return /\.(mp4|webm|ogg)$/i.test(url)
 }
@@ -15,43 +15,33 @@ export default function Home() {
   const [address, setAddress] = useState(null)
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
-
-  // modal
-  const [showModal, setShowModal] = useState(false)
-  const [selectedImage, setSelectedImage] = useState(null)
-
-  // search
   const [search, setSearch] = useState('')
 
+  const [showModal, setShowModal] = useState(false)
+  const [selectedItem, setSelectedItem] = useState(null)
+
   useEffect(() => {
-    async function whoami() {
-      try {
-        const me = await axios.get('/api/auth/me')
-        setAddress(me.data.address)
-      } catch {
-        setAddress(null)
-      }
-    }
-    whoami()
+    axios.get('/api/auth/me')
+      .then(res => setAddress(res.data.address))
+      .catch(() => setAddress(null))
   }, [])
 
   async function login() {
     if (!window.ethereum) return alert('Install MetaMask')
-
     await window.ethereum.request({ method: 'eth_requestAccounts' })
+
     const provider = new ethers.BrowserProvider(window.ethereum)
     const signer = await provider.getSigner()
     const address = await signer.getAddress()
 
     const { data } = await axios.get(`/api/auth/nonce?address=${address}`)
-    const message = `Sign this message to login. Nonce: ${data.nonce}`
-    const signature = await signer.signMessage(message)
+    const signature = await signer.signMessage(
+      `Sign this message to login. Nonce: ${data.nonce}`
+    )
 
-    const res = await axios.post('/api/auth/login', { address, signature })
-    if (res.status === 200) {
-      setAddress(address)
-      mutate()
-    }
+    await axios.post('/api/auth/login', { address, signature })
+    setAddress(address)
+    mutate()
   }
 
   async function logout() {
@@ -67,14 +57,13 @@ export default function Home() {
     mutate()
   }
 
-  function openDetail(img) {
-    setSelectedImage(img)
+  function openDetail(item) {
+    setSelectedItem(item)
     setShowModal(true)
   }
 
-  const filteredData = data?.filter(img =>
-    img.title?.toLowerCase().includes(search.toLowerCase()) ||
-    img.owner?.toLowerCase().includes(search.toLowerCase())
+  const filtered = data?.filter(i =>
+    i.title?.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -82,163 +71,93 @@ export default function Home() {
       <div className="max-w-4xl mx-auto">
 
         {/* HEADER */}
-        <header className="flex items-center justify-between mb-6">
+        <header className="flex justify-between mb-6">
           <h1 className="text-2xl font-bold">Carousel App</h1>
           {address ? (
-            <div className="flex gap-3 items-center">
-              <span className="text-sm">{address}</span>
-              <button onClick={logout} className="px-3 py-1 bg-red-500 text-white rounded">
-                Logout
-              </button>
-            </div>
+            <button onClick={logout} className="bg-red-500 text-white px-3 py-1 rounded">
+              Logout
+            </button>
           ) : (
-            <button onClick={login} className="px-4 py-2 bg-blue-600 text-white rounded">
+            <button onClick={login} className="bg-blue-600 text-white px-4 py-2 rounded">
               Login with MetaMask
             </button>
           )}
         </header>
 
-        {/* CAROUSEL (IMAGE + VIDEO) */}
+        {/* ✅ RESTORED CAROUSEL */}
         <section className="mb-8">
           <h2 className="text-xl mb-2">Carousel</h2>
           <div className="bg-white p-4 rounded shadow">
-            {filteredData?.length ? (
-              <div className="flex gap-4 overflow-x-auto">
-                {filteredData.map(item => (
-                  <div key={item._id} className="min-w-[250px]">
-                    {isVideo(item.url) ? (
-                      <video
-                        controls
-                        muted
-                        playsInline
-                        preload="metadata"
-                        className="w-full h-[180px] rounded object-cover bg-black"
-                      >
-                        <source src={item.url} type="video/mp4" />
-                      </video>
-                    ) : (
-                      <img
-                        src={item.url}
-                        alt={item.title}
-                        className="w-full h-[180px] object-cover rounded"
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
+            {filtered?.length ? (
+              <Carousel images={filtered.filter(i => !isVideo(i.url))} />
             ) : (
-              <p>No media yet</p>
+              <p>No images</p>
             )}
           </div>
         </section>
 
-        {/* ADD IMAGE */}
-        <section className="mb-4">
-          <h2 className="text-xl mb-2">Add Image / Video</h2>
-          <form className="flex gap-2" onSubmit={addImage}>
-            <input
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              placeholder="Image or MP4 URL"
-              className="flex-1 p-2 border rounded"
-            />
-            <input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Title"
-              className="w-48 p-2 border rounded"
-            />
-            <button className="px-3 bg-green-600 text-white rounded">Add</button>
-          </form>
-        </section>
-
-        {/* SEARCH (below add image as requested) */}
-        <section className="mb-8">
+        {/* ADD */}
+        <form onSubmit={addImage} className="flex gap-2 mb-4">
           <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by title or owner..."
-            className="w-full p-2 border rounded"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            placeholder="Image or video URL"
+            className="flex-1 p-2 border rounded"
           />
-        </section>
+          <input
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="Title"
+            className="w-48 p-2 border rounded"
+          />
+          <button className="bg-green-600 text-white px-3 rounded">Add</button>
+        </form>
 
-        {/* MANAGE */}
-        <section>
-          <h2 className="text-xl mb-2">Manage Media</h2>
-          <div className="bg-white p-4 rounded shadow">
-            <table className="w-full text-left">
-              <thead>
-                <tr>
-                  <th>Preview</th>
-                  <th>Title</th>
-                  <th>Owner</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData?.map(img => (
-                  <tr key={img._id} className="align-top">
-                    <td className="py-2">
-                      {isVideo(img.url) ? (
-                        <video
-                          muted
-                          className="w-36 h-20 object-cover rounded"
-                        >
-                          <source src={img.url} type="video/mp4" />
-                        </video>
-                      ) : (
-                        <img
-                          src={img.url}
-                          className="w-36 h-20 object-cover rounded"
-                        />
-                      )}
-                    </td>
-                    <td>{img.title}</td>
-                    <td>{img.owner}</td>
-                    <td>
-                      <button
-                        onClick={() => openDetail(img)}
-                        className="px-2 py-1 bg-blue-500 text-white rounded"
-                      >
-                        Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        {/* SEARCH */}
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search..."
+          className="w-full p-2 border rounded mb-6"
+        />
+
+        {/* LIST */}
+        <table className="w-full bg-white rounded shadow">
+          <tbody>
+            {filtered?.map(item => (
+              <tr key={item._id}>
+                <td className="p-2">{item.title}</td>
+                <td>
+                  <button
+                    onClick={() => openDetail(item)}
+                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                  >
+                    Details
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* DETAIL MODAL */}
-      {showModal && selectedImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="bg-white rounded-lg p-6 max-w-lg w-full"
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-bold mb-3">{selectedImage.title}</h3>
+      {/* MODAL */}
+      {showModal && selectedItem && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+             onClick={() => setShowModal(false)}>
+          <div className="bg-white p-6 rounded w-full max-w-lg"
+               onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold mb-3">{selectedItem.title}</h3>
 
-            {isVideo(selectedImage.url) ? (
-              <video controls className="w-full rounded mb-4">
-                <source src={selectedImage.url} type="video/mp4" />
+            {isVideo(selectedItem.url) ? (
+              <video controls className="w-full">
+                <source src={selectedItem.url} />
               </video>
             ) : (
-              <img src={selectedImage.url} className="w-full rounded mb-4" />
+              <img src={selectedItem.url} className="w-full rounded" />
             )}
 
-            <p className="text-sm text-gray-600 mb-4">
-              Owner: {selectedImage.owner}
-            </p>
-
-            <button
-              onClick={() => setShowModal(false)}
-              className="px-4 py-2 bg-gray-700 text-white rounded w-full"
-            >
+            <button className="mt-4 bg-gray-700 text-white px-4 py-2 rounded w-full">
               Close
             </button>
           </div>
