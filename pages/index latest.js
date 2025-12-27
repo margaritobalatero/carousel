@@ -1,27 +1,20 @@
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import axios from 'axios'
+import Carousel from '../components/Carousel'
 import { ethers } from 'ethers'
 
 const fetcher = url => axios.get(url).then(r => r.data)
-
-// ✅ Detect video files
-function isVideo(url) {
-  return /\.(mp4|webm|ogg)$/i.test(url)
-}
 
 export default function Home() {
   const { data, mutate } = useSWR('/api/images', fetcher)
   const [address, setAddress] = useState(null)
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
+  const [search, setSearch] = useState('')
 
-  // modal
   const [showModal, setShowModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
-
-  // search
-  const [search, setSearch] = useState('')
 
   useEffect(() => {
     async function whoami() {
@@ -37,8 +30,8 @@ export default function Home() {
 
   async function login() {
     if (!window.ethereum) return alert('Install MetaMask')
-
     await window.ethereum.request({ method: 'eth_requestAccounts' })
+
     const provider = new ethers.BrowserProvider(window.ethereum)
     const signer = await provider.getSigner()
     const address = await signer.getAddress()
@@ -74,7 +67,8 @@ export default function Home() {
 
   const filteredData = data?.filter(img =>
     img.title?.toLowerCase().includes(search.toLowerCase()) ||
-    img.owner?.toLowerCase().includes(search.toLowerCase())
+    img.owner?.toLowerCase().includes(search.toLowerCase()) ||
+    img.url?.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -83,7 +77,7 @@ export default function Home() {
 
         {/* HEADER */}
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Carousel App</h1>
+          <h1 className="text-2xl font-bold">ICC Batch 85 Carousel App</h1>
           {address ? (
             <div className="flex gap-3 items-center">
               <span className="text-sm">{address}</span>
@@ -98,48 +92,22 @@ export default function Home() {
           )}
         </header>
 
-        {/* CAROUSEL (IMAGE + VIDEO) */}
+        {/* CAROUSEL */}
         <section className="mb-8">
           <h2 className="text-xl mb-2">Carousel</h2>
           <div className="bg-white p-4 rounded shadow">
-            {filteredData?.length ? (
-              <div className="flex gap-4 overflow-x-auto">
-                {filteredData.map(item => (
-                  <div key={item._id} className="min-w-[250px]">
-                    {isVideo(item.url) ? (
-                      <video
-                        controls
-                        muted
-                        playsInline
-                        preload="metadata"
-                        className="w-full h-[180px] rounded object-cover bg-black"
-                      >
-                        <source src={item.url} type="video/mp4" />
-                      </video>
-                    ) : (
-                      <img
-                        src={item.url}
-                        alt={item.title}
-                        className="w-full h-[180px] object-cover rounded"
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>No media yet</p>
-            )}
+            {filteredData?.length ? <Carousel images={filteredData} /> : <p>No images</p>}
           </div>
         </section>
 
         {/* ADD IMAGE */}
-        <section className="mb-4">
-          <h2 className="text-xl mb-2">Add Image / Video</h2>
+        <section className="mb-6">
+          <h2 className="text-xl mb-2">Add Image</h2>
           <form className="flex gap-2" onSubmit={addImage}>
             <input
               value={url}
               onChange={e => setUrl(e.target.value)}
-              placeholder="Image or MP4 URL"
+              placeholder="Image URL"
               className="flex-1 p-2 border rounded"
             />
             <input
@@ -152,19 +120,20 @@ export default function Home() {
           </form>
         </section>
 
-        {/* SEARCH (below add image as requested) */}
+        {/* 🔍 SEARCH (moved below Add Image) */}
         <section className="mb-8">
           <input
+            type="text"
+            placeholder="Search by title, owner, or URL..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by title or owner..."
             className="w-full p-2 border rounded"
           />
         </section>
 
         {/* MANAGE */}
         <section>
-          <h2 className="text-xl mb-2">Manage Media</h2>
+          <h2 className="text-xl mb-2">Manage Images</h2>
           <div className="bg-white p-4 rounded shadow">
             <table className="w-full text-left">
               <thead>
@@ -177,21 +146,9 @@ export default function Home() {
               </thead>
               <tbody>
                 {filteredData?.map(img => (
-                  <tr key={img._id} className="align-top">
+                  <tr key={img._id}>
                     <td className="py-2">
-                      {isVideo(img.url) ? (
-                        <video
-                          muted
-                          className="w-36 h-20 object-cover rounded"
-                        >
-                          <source src={img.url} type="video/mp4" />
-                        </video>
-                      ) : (
-                        <img
-                          src={img.url}
-                          className="w-36 h-20 object-cover rounded"
-                        />
-                      )}
+                      <img src={img.url} className="w-36 h-20 object-cover rounded" />
                     </td>
                     <td>{img.title}</td>
                     <td>{img.owner}</td>
@@ -211,30 +168,17 @@ export default function Home() {
         </section>
       </div>
 
-      {/* DETAIL MODAL */}
+      {/* MODAL */}
       {showModal && selectedImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="bg-white rounded-lg p-6 max-w-lg w-full"
-            onClick={e => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+             onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full"
+               onClick={e => e.stopPropagation()}>
             <h3 className="text-xl font-bold mb-3">{selectedImage.title}</h3>
-
-            {isVideo(selectedImage.url) ? (
-              <video controls className="w-full rounded mb-4">
-                <source src={selectedImage.url} type="video/mp4" />
-              </video>
-            ) : (
-              <img src={selectedImage.url} className="w-full rounded mb-4" />
-            )}
-
+            <img src={selectedImage.url} className="w-full rounded mb-4" />
             <p className="text-sm text-gray-600 mb-4">
               Owner: {selectedImage.owner}
             </p>
-
             <button
               onClick={() => setShowModal(false)}
               className="px-4 py-2 bg-gray-700 text-white rounded w-full"
