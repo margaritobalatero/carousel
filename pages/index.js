@@ -12,11 +12,12 @@ function isVideo(url) {
 
 export default function Home() {
   const { data, mutate } = useSWR('/api/images', fetcher)
+
   const [address, setAddress] = useState(null)
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
-  const [search, setSearch] = useState('')
 
+  // ✅ Modal state ONLY
   const [showModal, setShowModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
 
@@ -57,14 +58,11 @@ export default function Home() {
     mutate()
   }
 
+  // ✅ Detail button handler
   function openDetail(item) {
     setSelectedItem(item)
     setShowModal(true)
   }
-
-  const filtered = data?.filter(i =>
-    i.title?.toLowerCase().includes(search.toLowerCase())
-  )
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -84,20 +82,16 @@ export default function Home() {
           )}
         </header>
 
-        {/* ✅ RESTORED CAROUSEL */}
+        {/* ✅ ORIGINAL CAROUSEL (UNCHANGED) */}
         <section className="mb-8">
           <h2 className="text-xl mb-2">Carousel</h2>
           <div className="bg-white p-4 rounded shadow">
-            {filtered?.length ? (
-              <Carousel images={filtered.filter(i => !isVideo(i.url))} />
-            ) : (
-              <p>No images</p>
-            )}
+            {data?.length ? <Carousel images={data} /> : <p>No images yet</p>}
           </div>
         </section>
 
-        {/* ADD */}
-        <form onSubmit={addImage} className="flex gap-2 mb-4">
+        {/* ADD IMAGE */}
+        <form onSubmit={addImage} className="flex gap-2 mb-6">
           <input
             value={url}
             onChange={e => setUrl(e.target.value)}
@@ -110,27 +104,21 @@ export default function Home() {
             placeholder="Title"
             className="w-48 p-2 border rounded"
           />
-          <button className="bg-green-600 text-white px-3 rounded">Add</button>
+          <button className="bg-green-600 text-white px-3 rounded">
+            Add
+          </button>
         </form>
-
-        {/* SEARCH */}
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search..."
-          className="w-full p-2 border rounded mb-6"
-        />
 
         {/* LIST */}
         <table className="w-full bg-white rounded shadow">
           <tbody>
-            {filtered?.map(item => (
+            {data?.map(item => (
               <tr key={item._id}>
                 <td className="p-2">{item.title}</td>
-                <td>
+                <td className="p-2">
                   <button
                     onClick={() => openDetail(item)}
-                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                    className="bg-blue-500 text-white px-3 py-1 rounded"
                   >
                     Details
                   </button>
@@ -139,25 +127,42 @@ export default function Home() {
             ))}
           </tbody>
         </table>
+
       </div>
 
-      {/* MODAL */}
+      {/* ✅ MODAL — VIDEO PLAYS ONLY HERE */}
       {showModal && selectedItem && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-             onClick={() => setShowModal(false)}>
-          <div className="bg-white p-6 rounded w-full max-w-lg"
-               onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold mb-3">{selectedItem.title}</h3>
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white p-6 rounded-lg w-full max-w-lg"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold mb-4">
+              {selectedItem.title}
+            </h3>
 
             {isVideo(selectedItem.url) ? (
-              <video controls className="w-full">
+              <video
+                controls
+                autoPlay
+                className="w-full rounded"
+              >
                 <source src={selectedItem.url} />
               </video>
             ) : (
-              <img src={selectedItem.url} className="w-full rounded" />
+              <img
+                src={selectedItem.url}
+                className="w-full rounded"
+              />
             )}
 
-            <button className="mt-4 bg-gray-700 text-white px-4 py-2 rounded w-full">
+            <button
+              onClick={() => setShowModal(false)}
+              className="mt-4 w-full bg-gray-700 text-white py-2 rounded"
+            >
               Close
             </button>
           </div>
