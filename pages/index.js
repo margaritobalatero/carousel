@@ -89,7 +89,7 @@ export default function Home() {
 
         {/* HEADER */}
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Erwin Lapida Maker</h1>
+          <h1 className="text-2xl font-bold">Bacolod_LDN Lapida Maker</h1>
           {address ? (
             <div className="flex gap-3 items-center">
               <span className="text-sm">{address}</span>
@@ -98,7 +98,7 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            <button onClick={logout} className="px-4 py-2 bg-blue-600 text-white rounded">
+            <button onClick={login} className="px-4 py-2 bg-blue-600 text-white rounded">
                   Login with MetaMask 
             </button>
           )}
