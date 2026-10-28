@@ -106,7 +106,7 @@ export default function Home() {
 
         {/* CAROUSEL */}
         <section className="mb-8">
-          <h2 className="text-xl mb-2">Carousel</h2>
+          <h2 className="text-xl mb-2">Lapida Carousel</h2>
           <div className="bg-white p-4 rounded shadow">
             {filteredData?.length ? <Carousel images={filteredData} /> : <p>No images</p>}
           </div>
